@@ -25,6 +25,7 @@ export class AppService {
       payload['gender'] = saveUser.gender;
       payload['age'] = saveUser.age || null;
       const keyExists = await cache.exists(`{users_all}`);
+      console.log(`key exists response`, keyExists);
       if (keyExists) {
         await cache.zAdd(`{users_all}`, {
           score: new Date().getTime(),
@@ -92,13 +93,20 @@ export class AppService {
         return JSON.parse(data);
       }
       const userObj = await this.appRepository.getUserById(id);
+      const payload = {
+        id: userObj.id ?? userObj._id,
+        username: userObj.username,
+        age: userObj.age,
+        email: userObj.email,
+        gender: userObj.gender,
+      };
       const setCache = await cache.set(
         `{user_backend}:${userObj.id}`,
-        JSON.stringify(userObj),
+        JSON.stringify(payload),
       );
-      await cache.expire(`{user_backend}:${userObj.id}`, 600);
+      await cache.expire(`{user_backend}:${payload.id}`, 600);
       console.log(`Cache set`, setCache);
-      return userObj;
+      return payload;
     } catch (error) {
       console.log(error);
       throw new BadRequestException('Error Getting User');
@@ -116,6 +124,11 @@ export class AppService {
       const saveUpadatedUser = await this.appRepository.updateUser(
         updateUserObj,
       );
+      const updateInRedis = await cache.set(
+        `{user_backend}:${updateUserObj.id}`,
+        JSON.stringify(updateUserObj),
+      );
+      console.log(updateInRedis);
       return saveUpadatedUser;
     } catch (error) {
       console.log(error);

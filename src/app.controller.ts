@@ -93,13 +93,7 @@ export class AppController {
     try {
       if (userId !== id) return { code: 401, message: 'Unauthorized' };
       const res = await this.appService.getUserFromId(id);
-      return {
-        id: res.id ?? res._id,
-        username: res.username,
-        age: res.age,
-        email: res.email,
-        gender: res.gender,
-      };
+      return res;
     } catch (error) {
       console.log(error);
       throw new BadRequestException('Error');

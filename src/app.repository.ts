@@ -53,7 +53,7 @@ export class AppRepository {
   async updateUser(body: any) {
     try {
       const res = await this.userModel.findByIdAndUpdate(
-        { _id: body.id ?? body._id },
+        { _id: body.id },
         {
           username: body.username,
           age: body.age,
