@@ -22,9 +22,11 @@ export class AppService {
         email: saveUser.email,
       };
       const accessToken = await this.jwtService.sign(payload);
+      payload['gender'] = saveUser.gender;
+      payload['age'] = saveUser.age || null;
       await cache.zAdd(`{users_all}`, {
         score: new Date().getTime(),
-        value: JSON.stringify(saveUser),
+        value: JSON.stringify(payload),
       });
       return { accessToken: accessToken };
     } catch (error) {
@@ -32,7 +34,7 @@ export class AppService {
       return null;
     }
   }
-  async getUsers(page: number, pageSize: number): Promise<any> {
+  async getUsers(page = 1, pageSize = 5): Promise<any> {
     try {
       let res = [];
       const count = await this.appRepository.count();

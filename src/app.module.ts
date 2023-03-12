@@ -9,6 +9,9 @@ import { AppRepository } from './app.repository';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
+import { SocketController } from './socket/socket.controller';
+import { AppGateway } from './socket/socket.gateway';
+// import { AuthService } from './socket/auth.strategy';
 const envPath = path.join(
   process.cwd(),
   process.env.NODE_ENV ? `envs/.env.${process.env.NODE_ENV}` : `/.env`,
@@ -21,13 +24,15 @@ dotenv.config({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: 'secretTokenBackend',
+      secret: `${process.env.JWT_SECRET_KEY}`,
     }),
-    MongooseModule.forRoot(`mongodb://localhost:27017/users_data`),
-    MongooseModule.forFeature([{ name: 'users_data', schema: UserSchema }]),
+    MongooseModule.forRoot(`${process.env.MONGO_URI}`),
+    MongooseModule.forFeature([
+      { name: `${process.env.MONGO_DB}`, schema: UserSchema },
+    ]),
   ],
-  controllers: [AppController],
-  providers: [AppService, AppRepository, JwtStrategy],
-  exports: [JwtStrategy, PassportModule],
+  controllers: [AppController, SocketController],
+  providers: [AppService, AppRepository, JwtStrategy, AppGateway],
+  exports: [JwtStrategy, PassportModule, AppGateway],
 })
 export class AppModule {}

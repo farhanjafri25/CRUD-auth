@@ -15,11 +15,15 @@ import { UserDto } from './dto/user.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetCurrentUser } from './decorators/currentUser.decorator';
+import { AppGateway } from './socket/socket.gateway';
 
 @Controller()
 @UseInterceptors(AppInterceptor)
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly appGateWay: AppGateway,
+  ) {}
 
   @Get()
   @UseGuards(AuthGuard())
@@ -52,6 +56,7 @@ export class AppController {
           );
         const saveUserObj = await this.appService.saveUser(body);
         if (saveUserObj) {
+          this.appGateWay.server.emit('new_user', saveUserObj);
           return saveUserObj;
         } else {
           throw new BadRequestException('Something Went Wrong');
@@ -107,6 +112,7 @@ export class AppController {
     @Body() body: UpdateUserDto,
   ): Promise<any> {
     try {
+      console.log(userId);
       if (userId !== body.id) return { code: 401, message: 'Unauthorized' };
       const validUserKeys = ['id', 'userName', 'age', 'email', 'gender'];
       const isValidUserObj = Object.keys(body).every((key) =>
@@ -127,6 +133,7 @@ export class AppController {
           );
         const updateUser = await this.appService.updateUser(body);
         if (updateUser) {
+          this.appGateWay.server.emit('user_updated', updateUser);
           return updateUser;
         }
         throw new BadRequestException('Unable to update User');
