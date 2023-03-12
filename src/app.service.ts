@@ -24,10 +24,13 @@ export class AppService {
       const accessToken = await this.jwtService.sign(payload);
       payload['gender'] = saveUser.gender;
       payload['age'] = saveUser.age || null;
-      await cache.zAdd(`{users_all}`, {
-        score: new Date().getTime(),
-        value: JSON.stringify(payload),
-      });
+      const keyExists = await cache.exists(`{users_all}`);
+      if (keyExists) {
+        await cache.zAdd(`{users_all}`, {
+          score: new Date().getTime(),
+          value: JSON.stringify(payload),
+        });
+      }
       return { accessToken: accessToken };
     } catch (error) {
       console.log(error);
