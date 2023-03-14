@@ -21,17 +21,11 @@ export class AppService {
         username: saveUser.username,
         email: saveUser.email,
       };
-      const accessToken = await this.jwtService.sign(payload);
+      const accessToken = await this.jwtService.sign(payload, {
+        expiresIn: '2592000000',
+      });
       payload['gender'] = saveUser.gender;
       payload['age'] = saveUser.age || null;
-      const keyExists = await cache.exists(`{users_all}`);
-      console.log(`key exists response`, keyExists);
-      if (keyExists) {
-        await cache.zAdd(`{users_all}`, {
-          score: new Date().getTime(),
-          value: JSON.stringify(payload),
-        });
-      }
       return { accessToken: accessToken };
     } catch (error) {
       console.log(error);
@@ -44,8 +38,9 @@ export class AppService {
       const count = await this.appRepository.count();
       const { skip, limit } = this.getPagination(page, pageSize);
       if (page === 1) {
+        console.log(skip, limit);
         const data = await cache.ZRANGE_WITHSCORES(`{users_all}`, skip, limit, {
-          REV: true,
+          REV: false,
         });
         console.log(`redis users all Data`, data);
         if (data.length > 0) {
@@ -53,7 +48,7 @@ export class AppService {
             res.push(JSON.parse(ele.value));
           });
           return {
-            docs: res.length < limit ? res : res.slice(0, res.length - 1),
+            docs: res.length < limit ? res : res.slice(0, res.length),
             nextPage: res.length < limit ? null : +page + 1,
             totalDocs: count,
           };

@@ -78,6 +78,7 @@ export class AppController {
   ): Promise<any> {
     try {
       const res = await this.appService.getUsers(+page, +pageSize);
+      this.appGateWay.server.emit('resources', res);
       return res;
     } catch (error) {
       console.log(error);
@@ -86,13 +87,9 @@ export class AppController {
   }
   @Get('/me')
   @UseGuards(AuthGuard())
-  async getUser(
-    @GetCurrentUser('id') userId: string,
-    @Query('id') id: string,
-  ): Promise<any> {
+  async getUser(@GetCurrentUser('id') userId: string): Promise<any> {
     try {
-      if (userId !== id) return { code: 401, message: 'Unauthorized' };
-      const res = await this.appService.getUserFromId(id);
+      const res = await this.appService.getUserFromId(userId);
       return res;
     } catch (error) {
       console.log(error);
@@ -106,8 +103,7 @@ export class AppController {
     @Body() body: UpdateUserDto,
   ): Promise<any> {
     try {
-      console.log(userId);
-      if (userId !== body.id) return { code: 401, message: 'Unauthorized' };
+      body['id'] = userId;
       const validUserKeys = ['id', 'userName', 'age', 'email', 'gender'];
       const isValidUserObj = Object.keys(body).every((key) =>
         validUserKeys.includes(key),
@@ -141,13 +137,9 @@ export class AppController {
   }
   @Delete()
   @UseGuards(AuthGuard())
-  async deleteUser(
-    @GetCurrentUser('id') userId: string,
-    @Query('id') id: string,
-  ) {
+  async deleteUser(@GetCurrentUser('id') userId: string) {
     try {
-      if (userId !== id) return { code: 401, message: 'Unauthorized' };
-      const res = await this.appService.deleteUser(id);
+      const res = await this.appService.deleteUser(userId);
       return res;
     } catch (error) {
       console.log(error);
