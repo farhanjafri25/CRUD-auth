@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AppRepository } from './app.repository';
-const cache = require('./config/redis.config');
+import cache from './config/redis.config';
 
 @Injectable()
 export class AppService {
@@ -22,7 +22,7 @@ export class AppService {
         email: saveUser.email,
       };
       const accessToken = await this.jwtService.sign(payload, {
-        expiresIn: '2592000000',
+        expiresIn: '30d',
       });
       payload['gender'] = saveUser.gender;
       payload['age'] = saveUser.age || null;
@@ -39,9 +39,7 @@ export class AppService {
       const { skip, limit } = this.getPagination(page, pageSize);
       if (page === 1) {
         console.log(skip, limit);
-        const data = await cache.ZRANGE_WITHSCORES(`{users_all}`, skip, limit, {
-          REV: false,
-        });
+        const data = await cache.ZRANGE_WITHSCORES(`{users_all}`, skip, limit);
         console.log(`redis users all Data`, data);
         if (data.length > 0) {
           data.forEach((ele) => {
@@ -137,6 +135,23 @@ export class AppService {
     } catch (error) {
       console.log(error);
       throw new BadRequestException('Error');
+    }
+  }
+  async generateTokens(id: string) {
+    try {
+      const user = await this.appRepository.getUserById(id);
+      const payload = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      };
+      const accessToken = await this.jwtService.sign(payload, {
+        expiresIn: '30d',
+      });
+      return { accessToken: accessToken };
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Error generating Access Token');
     }
   }
   public getPagination(page: number, pageSize: number) {

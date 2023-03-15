@@ -146,4 +146,14 @@ export class AppController {
       throw new BadRequestException('Error');
     }
   }
+  @Post('/generateTokens')
+  async generateTokens(@Body('id') id: string) {
+    try {
+      const res = await this.appService.generateTokens(id);
+      return res;
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Error generating New Access token');
+    }
+  }
 }

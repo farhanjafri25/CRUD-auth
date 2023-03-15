@@ -1,17 +1,9 @@
-const redis = require('redis');
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-const envPath = path.join(
-  process.cwd(),
-  process.env.NODE_ENV ? `envs/.env.${process.env.NODE_ENV}` : `/.env`,
-);
-dotenv.config({
-  path: envPath,
-});
+import { createClient } from 'redis';
+const redisURL = `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
+console.log({ redisURL }, process.env.REDIS_URL);
 
-const client = redis.createClient({
-  host: `${process.env.REDIS_HOST}`,
-  port: `${process.env.REDIS_PORT}`,
+const client = createClient({
+  url: redisURL,
 });
 
 client
@@ -23,4 +15,4 @@ client
     console.log(err);
   });
 
-module.exports = client;
+export default client;

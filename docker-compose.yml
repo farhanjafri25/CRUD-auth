@@ -20,5 +20,7 @@ services:
       - redis
       - mongo
     environment:
-      - MONGODB_URI=mongodb://host.docker.internal:27017/users_data
-      - REDIS_URL=redis://host.docker.internal:6379
+      - MONGO_URI=mongodb://mongo:27017/users_data
+      - REDIS_URL=redis://redis:6379
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
