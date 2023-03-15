@@ -31,9 +31,11 @@ export class AppController {
     console.log(`User -->`, user);
     return this.appService.getHello();
   }
+  //save a new user in db and return an accesstoken
   @Post('/save')
   async saveUser(@Body() body: UserDto): Promise<any> {
     try {
+      //check if the body has only these valid keys, any keys other than this would result in 400 status code
       const validUserKeys = ['userName', 'age', 'email', 'gender'];
       const isValidUserObj = Object.keys(body).every((key) =>
         validUserKeys.includes(key),
@@ -54,8 +56,10 @@ export class AppController {
           throw new BadRequestException(
             'Please enter username greater than 5 characters',
           );
+        //save user if keys are valid
         const saveUserObj = await this.appService.saveUser(body);
         if (saveUserObj) {
+          //emit message to socket and returns an access token to http request
           this.appGateWay.server.emit('new_user', saveUserObj);
           return saveUserObj;
         } else {
@@ -70,6 +74,7 @@ export class AppController {
     }
   }
 
+  //get all users by pagination
   @Get('/all')
   @UseGuards(AuthGuard())
   async getUsers(
@@ -85,6 +90,7 @@ export class AppController {
       throw new BadRequestException('Error Fetching Users');
     }
   }
+  //get current user data by accesstoken
   @Get('/me')
   @UseGuards(AuthGuard())
   async getUser(@GetCurrentUser('id') userId: string): Promise<any> {
@@ -96,6 +102,7 @@ export class AppController {
       throw new BadRequestException('Error');
     }
   }
+  //updates current user based on access token and the updated data passed
   @Post('/update/user')
   @UseGuards(AuthGuard())
   async updateUser(
@@ -135,6 +142,7 @@ export class AppController {
       throw new BadRequestException('Something went wrong');
     }
   }
+  //deletes a user record by its accesstoken
   @Delete()
   @UseGuards(AuthGuard())
   async deleteUser(@GetCurrentUser('id') userId: string) {
@@ -146,6 +154,7 @@ export class AppController {
       throw new BadRequestException('Error');
     }
   }
+  //generates a new access token by user ID
   @Post('/generateTokens')
   async generateTokens(@Body('id') id: string) {
     try {

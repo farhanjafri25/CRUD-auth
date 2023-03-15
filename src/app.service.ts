@@ -15,12 +15,14 @@ export class AppService {
 
   async saveUser(body: any): Promise<any> {
     try {
+      //saves the user in mongoDB
       const saveUser = await this.appRepository.saveUser(body);
       const payload = {
         id: saveUser.id,
         username: saveUser.username,
         email: saveUser.email,
       };
+      //generate an accesstoken
       const accessToken = await this.jwtService.sign(payload, {
         expiresIn: '30d',
       });
@@ -37,6 +39,7 @@ export class AppService {
       let res = [];
       const count = await this.appRepository.count();
       const { skip, limit } = this.getPagination(page, pageSize);
+      //checks if a cached data is present in for pagination. If present then returns the cached data and saves the db call
       if (page === 1) {
         console.log(skip, limit);
         const data = await cache.ZRANGE_WITHSCORES(`{users_all}`, skip, limit);
@@ -52,6 +55,7 @@ export class AppService {
           };
         }
       }
+      // If not present in redis this will take data from mongoDb
       const getUsers = await this.appRepository.getAllUsers(skip, limit);
       res = getUsers.map((ele) => ({
         id: ele.id,
@@ -81,10 +85,12 @@ export class AppService {
   }
   async getUserFromId(id: string): Promise<any> {
     try {
+      //if user data present in cache then return
       const data = await cache.get(`{user_backend}:${id}`);
       if (data) {
         return JSON.parse(data);
       }
+      //if user data not present in redis then make a mongo call and save in redis
       const userObj = await this.appRepository.getUserById(id);
       const payload = {
         id: userObj.id ?? userObj._id,
@@ -107,6 +113,7 @@ export class AppService {
   }
   async updateUser(body: any): Promise<any> {
     try {
+      //gets the record of user and checks if a new updated data is found then update it else set the old value
       const userObj = await this.getUserFromId(body.id);
       const updateUserObj = { ...userObj };
       updateUserObj['username'] = body.userName ?? userObj.username;
@@ -131,6 +138,7 @@ export class AppService {
   async deleteUser(id: string) {
     try {
       const deleteUser = await this.appRepository.delete(id);
+      await cache.del(`{user_backend}:${id}`);
       return deleteUser;
     } catch (error) {
       console.log(error);
