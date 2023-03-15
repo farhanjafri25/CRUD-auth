@@ -60,7 +60,7 @@ export class AppService {
         email: ele.email,
         gender: ele.gender,
       }));
-      if (page === 1) {
+      if (page === 1 && res.length === pageSize) {
         res.forEach(async (ele) => {
           await cache.zAdd(`{users_all}`, {
             score: new Date().getTime(),
@@ -140,6 +140,7 @@ export class AppService {
   async generateTokens(id: string) {
     try {
       const user = await this.appRepository.getUserById(id);
+      console.log(`UserObj`, user);
       const payload = {
         id: user.id,
         username: user.username,
